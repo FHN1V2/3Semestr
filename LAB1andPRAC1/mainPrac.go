@@ -9,15 +9,9 @@ func main() {
 stack := Stack{}
 queue := Queue{}
 set:=NewSet()
-//array := MyArray{}
-//var array *MyArray
-//array:= NewMyArray(10)
+
 hmap := HashMap{} // Создаем экземпляр хэштаблицы
-//list2 :=DoublyLinkedList{}
-//tree1:= BSTNode{}
-//var tree *BSTNode
-// index:=0
-//tree = BSTadd(tree, index)
+
 for  {   
 	var input string
 	var index2 string

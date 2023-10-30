@@ -79,4 +79,43 @@ func (ll *LinkedList) SLdisplay() {
     fmt.Println("nil")
 }
 
+// Функция для поиска элемента в списке
+func (ll *LinkedList) SLsearch(data string) bool {
+    current := ll.Head
+    for current != nil {
+        if current.Data == data {
+            return true
+        }
+        current = current.Next
+    }
+    return false
+}
 
+// Функция для удаления элемента с начала списка
+func (ll *LinkedList) SLremoveFront() {
+    if ll.Head == nil {
+        return
+    }
+    ll.Head = ll.Head.Next
+}
+
+
+// Функция для удаления элемента с конца списка
+func (ll *LinkedList) SLremoveEnd() {
+    if ll.Head == nil {
+        return
+    }
+
+    if ll.Head.Next == nil {
+        ll.Head = nil
+        return
+    }
+
+    current := ll.Head
+    for current.Next.Next != nil {
+        current = current.Next
+    }
+    current.Next = nil
+}
+
+//удаление с начала и с конца без поиска

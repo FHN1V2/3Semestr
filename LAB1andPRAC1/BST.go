@@ -19,7 +19,7 @@ func BSTadd(root *BSTNode, key int) *BSTNode {
         return NewNode(key)
     }
 
-    if key <= root.Key {
+    if key < root.Key {
         root.Left = BSTadd(root.Left, key)
     } else if key > root.Key {
         root.Right = BSTadd(root.Right, key)
@@ -76,4 +76,49 @@ func PrintTree(BSTNode *BSTNode, prefix string, isLeft bool) {
         PrintTree(BSTNode.Left, prefix + "   ", true)
     }
 }
+func BStdel(root *BSTNode, value int) *BSTNode {
+	if root == nil {
+		return root
+	}
 
+	if value < root.Key {
+		root.Left = BStdel(root.Left, value)
+	} else if value > root.Key {
+		root.Right = BStdel(root.Right, value)
+	} else {
+		if root.Left == nil {
+			return root.Right
+		} else if root.Right == nil {
+			return root.Left
+		}
+
+		root.Key = minValue(root.Right)
+		root.Right = BStdel(root.Right, root.Key)
+	}
+
+	return root
+}
+func minValue(root *BSTNode) int {
+	minValue := root.Key
+	for root.Left != nil {
+		minValue = root.Left.Key
+		root = root.Left
+	}
+	return minValue
+}
+
+func BstFind(root *BSTNode, value int) string {
+	if root == nil {
+		return "false"
+	}
+
+	if value == root.Key {
+		return "true"
+	}
+
+	if value < root.Key {
+		return BstFind(root.Left, value)
+	} else {
+		return BstFind(root.Right, value)
+	}
+}

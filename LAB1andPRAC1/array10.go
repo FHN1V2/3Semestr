@@ -21,9 +21,13 @@ func (arr *MyArray) Aset(index int, value string) {
 
 func (arr *MyArray) Aget(index int) string {
 	if index >= 0 && index < len(arr.data) {
+		if arr.data[index]!=""{
 		return arr.data[index]
 	}
+}
+	//else{
 	return "Error"
+//}
 }
 
 func (arr *MyArray) ARadd(value string) string {

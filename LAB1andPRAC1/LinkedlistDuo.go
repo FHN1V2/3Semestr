@@ -69,6 +69,39 @@ func (list *DoublyLinkedList) Dldel(data interface{}) {
         current = current.next
     }
 }
+func (list *DoublyLinkedList) DlRemoveFirst() {
+    if list.head != nil {
+        firstNode := list.head
+
+        if firstNode.next != nil {
+            // Если список содержит более одного элемента
+            secondNode := firstNode.next
+            secondNode.previous = nil
+            list.head = secondNode
+        } else {
+            // Если список содержит только один элемент
+            list.head = nil
+            list.tail = nil
+        }
+    }
+}
+func (list *DoublyLinkedList) DlRemoveLast() {
+    if list.tail != nil {
+        lastNode := list.tail
+
+        if lastNode.previous != nil {
+            // Если список содержит более одного элемента
+            secondLastNode := lastNode.previous
+            secondLastNode.next = nil
+            list.tail = secondLastNode
+        } else {
+            // Если список содержит только один элемент
+            list.head = nil
+            list.tail = nil
+        }
+    }
+}
+
 
 // Вывод содержимого списка
 func (list *DoublyLinkedList) DLdisplay() {
@@ -78,4 +111,15 @@ func (list *DoublyLinkedList) DLdisplay() {
         current = current.next
     }
     fmt.Println("nil")
+}
+// Поиск элемента в списке
+func (list *DoublyLinkedList) DlFind(data string) bool {
+    current := list.head
+    for current != nil {
+        if current.data == data {
+            return true // Найден элемент, возвращаем true
+        }
+        current = current.next
+    }
+    return false // Элемент не найден, возвращаем false
 }

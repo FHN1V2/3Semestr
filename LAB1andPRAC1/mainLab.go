@@ -174,7 +174,7 @@ func main() {
             // Добавление элемента в хэштаблицу
             fmt.Scanf("%s", &input) // Считываем ключ
             fmt.Scanf("%s", &index2) // Считываем значение
-            hmap.Hadd(input, index2)
+            fmt.Println(hmap.Hadd(input, index2))
 
         case "HGET":
             // Получение значения из хэштаблицы
@@ -196,6 +196,13 @@ func main() {
             list1.SLdel(input)
         case "LSDISPLAY":
             list1.SLdisplay()
+        case "LSFIND":
+            fmt.Scanf("%s", &input)
+            fmt.Println(list1.SLsearch(input))
+        case "LSDELS":
+            list1.SLremoveFront()
+        case "LSDELE":
+            list1.SLremoveEnd()
         case "DLADDE":
             fmt.Scanf("%s", &input)
             list2.DladdE(input)
@@ -207,11 +214,24 @@ func main() {
             list2.DlAdd(input)
         case "DLDISPLAY":
             list2.DLdisplay()
+        case "DLDELH":
+            list2.DlRemoveFirst()
+        case "DLDELE":
+            list2.DlRemoveLast()
+        case "DLFIND":
+            fmt.Scanf("%s", &input)
+            fmt.Println(list2.DlFind(input))
         case "BSTADD":
             fmt.Scanf("%d", &index)
             tree =BSTadd(tree, index)
         case "BSTDISPLAY":
             PrintTree(tree, "", true)
+        case "BSTFIND":
+            fmt.Scanf("%d", &index)
+            fmt.Println(BstFind(tree,index))
+        case "BSTDEL":
+            fmt.Scanf("%d",&index)
+            tree = BStdel(tree,index)
     }
 }
 }
