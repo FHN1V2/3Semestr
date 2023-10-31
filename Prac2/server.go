@@ -1,137 +1,68 @@
 package main
 
 import (
-	"fmt"
+	"bufio"
 	"net"
-	"strings"
+	"sync"
+
+	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 func main() {
-	startServer()
-}
+	var loggerConfig = zap.NewProductionConfig()
+	loggerConfig.Level.SetLevel(zap.DebugLevel)
 
-type Database struct {
-	stack  Stack
-	queue  Queue
-	hash   HashMap
-	set    *Set // Change the field type to *Set
-}
-
-
-func startServer() {
-	listen, err := net.Listen("tcp", "localhost:6379")
+	logger, err := loggerConfig.Build()
 	if err != nil {
-		fmt.Printf("Failed to start server: %v\n", err)
+		panic(err)
+	}
+
+	l, err := net.Listen("tcp", "localhost:9090")
+	if err != nil {
 		return
 	}
-	defer listen.Close()
 
-	fmt.Println("Server is listening on port 6379")
+	defer l.Close()
 
-	db := Database{
-		stack:  Stack{},
-		queue:  Queue{},
-		hash:   HashMap{},
-		set:    NewSet(),
-	}
+	// Using sync.Map to not deal with concurrency slice/map issues
+	var connMap = &sync.Map{}
 
 	for {
-		conn, err := listen.Accept()
+		conn, err := l.Accept()
 		if err != nil {
-			fmt.Printf("Error accepting connection: %v\n", err)
-			continue
-		}
-
-		go handleConnection(conn, &db)
-	}
-}
-
-func handleConnection(conn net.Conn, db *Database) {
-	defer conn.Close()
-
-	buf := make([]byte, 1024)
-	for {
-		n, err := conn.Read(buf)
-		if err != nil {
-			fmt.Printf("Connection error: %v\n", err)
+			logger.Error("error accepting connection", zap.Error(err))
 			return
 		}
 
-		command := string(buf[:n])
-		command = strings.TrimSpace(command)
+		id := uuid.New().String()
+		connMap.Store(id, conn)
 
-		args := strings.Fields(command)
+		go handleUserConnection(id, conn, connMap, logger)
+	}
+}
 
-		if len(args) == 0 {
-			continue
+func handleUserConnection(id string, c net.Conn, connMap *sync.Map, logger *zap.Logger) {
+	defer func() {
+		c.Close()
+		connMap.Delete(id)
+	}()
+
+	for {
+		userInput, err := bufio.NewReader(c).ReadString('\n')
+		if err != nil {
+			logger.Error("error reading from client", zap.Error(err))
+			return
 		}
 
-		switch args[0] {
-		case "SPUSH":
-			if len(args) == 2 {
-				db.stack.Spush(args[1])
-				conn.Write([]byte("OK\n"))
-			} else {
-				conn.Write([]byte("Error: Invalid arguments\n"))
+		connMap.Range(func(key, value interface{}) bool {
+			if conn, ok := value.(net.Conn); ok {
+				if _, err := conn.Write([]byte(userInput)); err != nil {
+					logger.Error("error accepting connection", zap.Error(err))
+				}
 			}
-		case "SPOP":
-			value, err := db.stack.Spop()
-			if err != nil {
-				conn.Write([]byte("Error: " + err.Error() + "\n"))
-			} else {
-				conn.Write([]byte(value + "\n"))
-			}
-			
-		case "QPUSH":
-			if len(args) == 2 {
-				db.queue.Qadd(args[1])
-				conn.Write([]byte("OK\n"))
-			} else {
-				conn.Write([]byte("Error: Invalid arguments\n"))
-			}
-		case "QPOP":
-			value := db.queue.Qdell()
-			conn.Write([]byte(value + "\n"))
-		case "HADD":
-			if len(args) == 3 {
-				db.hash.Hadd(args[1], args[2])
-				conn.Write([]byte("OK\n"))
-			} else {
-				conn.Write([]byte("Error: Invalid arguments\n"))
-			}
-		case "HGET":
-			if len(args) == 2 {
-				value := db.hash.Hget(args[1])
-				conn.Write([]byte(value + "\n"))
-			} else {
-				conn.Write([]byte("Error: Invalid arguments\n"))
-			}
-		case "HDEL":
-			if len(args) == 2 {
-				db.hash.Hdel(args[1])
-				conn.Write([]byte("OK\n"))
-			} else {
-				conn.Write([]byte("Error: Invalid arguments\n"))
-			}
-		case "SETPUSH":
-			if len(args) == 2 {
-				db.set.SetAdd(args[1])
-				conn.Write([]byte("OK\n"))
-			} else {
-				conn.Write([]byte("Error: Invalid arguments\n"))
-			}
-		case "SETDEL":
-			if len(args) == 2 {
-				db.set.SetRemove(args[1])
-				conn.Write([]byte("OK\n"))
-			} else {
-				conn.Write([]byte("Error: Invalid arguments\n"))
-			}
-		case "SETPRINT":
-			values := db.set.SetPrint()
-			conn.Write([]byte(strings.Join(values, ",") + "\n"))
-		default:
-			conn.Write([]byte("Error: Unknown command\n"))
-		}
+
+			return true
+		})
 	}
 }
