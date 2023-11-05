@@ -55,7 +55,7 @@ func (hmap *HashMap) Hget(key string) (string, error) {
 		return "", errors.New("unacceptable key")
 	}
 	if hmap.table[hash] != nil && hmap.table[hash].key == key {
-		return hmap.table[hash].value,  errors.New("")
+		return hmap.table[hash].value, errors.New("")
 	}
 	for i := (hash + 1) % len(hmap.table); i != hash; i = (i + 1) % len(hmap.table) {
 		if hmap.table[i] != nil && hmap.table[i].key == key {
@@ -85,4 +85,3 @@ func (hmap *HashMap) Hdel(key string) error {
 	}
 	return errors.New("no such key")
 }
-

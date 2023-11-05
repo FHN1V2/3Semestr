@@ -1,43 +1,50 @@
 package main
-
-import (
-	"errors"
-)
-
-
+import "sync"
 
 type SNode struct {
 	next *SNode
-	val string
+	val  string
 }
 
 type Stack struct {
+	mu   sync.Mutex
 	head *SNode
 }
 
 func (s *Stack) Spush(val string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	newNode := &SNode{val: val}
 	newNode.next = s.head
 	s.head = newNode
 }
 
-func (s *Stack) Spop() (string, error) {
+func (s *Stack) Spop() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if s.head == nil {
-		return "", errors.New("stack is empty")
+		return "error"
 	}
-	val := s.head.val 
+	val := s.head.val
 	s.head = s.head.next
-	return val, errors.New("")
+	return val
 }
 
-func (s *Stack) Peek() (string, error) {//лишнее
+func (s *Stack) Peek() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if s.head == nil {
-		return "", errors.New("stack is empty")
+		return ""
 	}
-	return s.head.val, errors.New("")
+	return s.head.val
 }
 
 func (s *Stack) IsEmpty() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	return s.head == nil
 }
-

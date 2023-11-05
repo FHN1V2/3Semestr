@@ -1,68 +1,72 @@
 package main
 
 import (
-	"bufio"
+	"fmt"
 	"net"
 	"sync"
-
-	"github.com/google/uuid"
-	"go.uber.org/zap"
+	"strings"
 )
 
-func main() {
-	var loggerConfig = zap.NewProductionConfig()
-	loggerConfig.Level.SetLevel(zap.DebugLevel)
 
-	logger, err := loggerConfig.Build()
-	if err != nil {
-		panic(err)
-	}
+func handleConnection(conn net.Conn, stack *Stack) {
+	defer conn.Close()
 
-	l, err := net.Listen("tcp", "localhost:9090")
-	if err != nil {
-		return
-	}
-
-	defer l.Close()
-
-	// Using sync.Map to not deal with concurrency slice/map issues
-	var connMap = &sync.Map{}
+	buf := make([]byte, 1024)
 
 	for {
-		conn, err := l.Accept()
+		n, err := conn.Read(buf)
 		if err != nil {
-			logger.Error("error accepting connection", zap.Error(err))
+			fmt.Printf("Connection closed: %s\n", err)
 			return
 		}
 
-		id := uuid.New().String()
-		connMap.Store(id, conn)
+		input := string(buf[:n])
+		fmt.Printf("Received input: %s\n", input)
 
-		go handleUserConnection(id, conn, connMap, logger)
+		parts := strings.Fields(input)
+		command := parts[0]
+
+		if command == "SPUSH" {
+			value := parts[1]
+			stack.Spush(value)
+			conn.Write([]byte("Value pushed to stack: " + value + "\n"))
+		} else if command == "SPOP" {
+			poppedValue := stack.Spop()
+			conn.Write([]byte("Popped value from stack: " + poppedValue + "\n"))
+		} else {
+			conn.Write([]byte("Unknown command: " + command + "\n"))
+		}
+
+		response := "Command received: " + command
+		conn.Write([]byte(response + "\n"))
 	}
 }
 
-func handleUserConnection(id string, c net.Conn, connMap *sync.Map, logger *zap.Logger) {
-	defer func() {
-		c.Close()
-		connMap.Delete(id)
-	}()
+func main() {
+	listen, err := net.Listen("tcp", "localhost:6978")
+	if err != nil {
+		fmt.Printf("Failed to bind to port: %s\n", err)
+		return
+	}
+
+	defer listen.Close()
+
+	fmt.Println("Server is listening on port 6978")
+
+	var wg sync.WaitGroup
+	stack := &Stack{}
 
 	for {
-		userInput, err := bufio.NewReader(c).ReadString('\n')
+		conn, err := listen.Accept()
 		if err != nil {
-			logger.Error("error reading from client", zap.Error(err))
-			return
+			fmt.Printf("Failed to accept connection: %s\n", err)
+			continue
 		}
 
-		connMap.Range(func(key, value interface{}) bool {
-			if conn, ok := value.(net.Conn); ok {
-				if _, err := conn.Write([]byte(userInput)); err != nil {
-					logger.Error("error accepting connection", zap.Error(err))
-				}
-			}
-
-			return true
-		})
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			handleConnection(conn, stack)
+		}()
 	}
 }
