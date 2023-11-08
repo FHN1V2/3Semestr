@@ -1,24 +1,27 @@
 package main
 
-import "errors"
+import "sync"
 
 // Queue represents a queue data structure.
 type Queue struct {
+	mu    sync.Mutex
 	items []string
 }
 
 // Qadd adds an element to the end of the queue.
-func (q *Queue) Qadd(item string) {
+func (q *Queue) Qpush(item string) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
 	q.items = append(q.items, item)
 }
 
-func (q *Queue) Qdell() (string, error) {
+func (q *Queue) Qpop() string {
 	if len(q.items) == 0 {
-		return "", errors.New("queue is empty")
+		return "Error"
 	}
 	item := q.items[0]
 	q.items = q.items[1:]
-	return item, errors.New("")
+	return item
 }
 
 // IsEmpty returns true if the queue is empty, and false otherwise.

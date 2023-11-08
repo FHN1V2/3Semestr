@@ -2,9 +2,13 @@ package main
 
 import (
 	"fmt"
+	"sync"
+	"strings"
+
 )
 
 type Set struct {
+	mu sync.Mutex
 	data map[string]bool
 }
 
@@ -13,7 +17,10 @@ func NewSet() *Set {
 }
 
 func (s *Set) SetAdd(item string) {
+	s.mu.Lock()
 	s.data[item] = true
+	defer s.mu.Unlock()
+	
 }
 
 func (s *Set) SetRemove(item string) {
@@ -38,10 +45,14 @@ func (s *Set) SetSize() int {
 	return len(s.data)
 }
 
-func (s *Set) SetPrint() {
-	fmt.Print("Set elements: ")
+func (s *Set) SetPrint() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var items []string
 	for item := range s.data {
-		fmt.Printf("%s ", item)
+		items = append(items, item)
 	}
-	fmt.Println()
+
+	return "Set content: " + strings.Join(items, ", ")
 }
