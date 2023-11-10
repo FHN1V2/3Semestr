@@ -1,33 +1,65 @@
 package main
 
-
 import "errors"
-// Queue represents a queue data structure.
+
+type Qnode struct {
+	next *Qnode
+	val  string
+}
+
+// Queue struct
 type Queue struct {
-	items []string
+	head *Qnode
+	tail *Qnode
 }
 
 // Qadd adds an element to the end of the queue.
 func (q *Queue) Qadd(item string) {
-	q.items = append(q.items, item)
-}
-
-
-func (q *Queue) Qdell() (string, error) {
-	if len(q.items) == 0 {
-		return "", errors.New("queue is empty")
+	newNode := &Qnode{
+		val:  item,
+		next: nil,
 	}
-	item := q.items[0]
-	q.items = q.items[1:]
-	return item,errors.New("")
+
+	if q.tail == nil {
+		q.head = newNode
+		q.tail = newNode
+	} else {
+		q.tail.next = newNode
+		q.tail = newNode
+	}
 }
 
-// IsEmpty returns true if the queue is empty, and false otherwise.
+// Qpop removes and returns the element from the beginning of the queue.
+func (q *Queue) Qpop() (string, error) {
+	if q.IsEmpty() {
+		return "", errors.New("Queue is empty")
+	}
+
+	item := q.head.val
+	q.head = q.head.next
+
+	if q.head == nil {
+		q.tail = nil
+	}
+	return item, errors.New("")
+}
+
+// Qdell removes and returns the element from tail
+func (q *Queue) Qdell() (string, error) {
+	if q.IsEmpty() {
+		return "", errors.New("Queue is empty")
+	}
+
+	item := q.head.val
+	q.head = q.head.next
+
+	if q.head == nil {
+		q.tail = nil
+	}
+	return item, errors.New("")
+}
+
+// IsEmpty returns true if the queue is empty,else return false
 func (q *Queue) IsEmpty() bool {
-	return len(q.items) == 0
-}
-
-
-func (q *Queue) Qsize() int{
-	return len(q.items)
+	return q.head == nil
 }
