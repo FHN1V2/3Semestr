@@ -17,9 +17,9 @@ func (s *Set) SetAdd(item string) {
 }
 
 func (s *Set) SetRemove(item string) {
-    if a:=s.data[item];!a{
-        fmt.Println("Not found")
-    }
+    // if a:=s.data[item];!a{
+    //     fmt.Println("Not found")
+    // }
     
     newData := make(map[string]bool)
     for key := range s.data {

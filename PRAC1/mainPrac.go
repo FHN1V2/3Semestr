@@ -5,12 +5,12 @@ import (
 )
 
 func main() {
-//list1 := LinkedList{}
+
 stack := Stack{}
 queue := Queue{}
 set:=NewSet()
 
-hmap := HashMap{} // Создаем экземпляр хэштаблицы
+hmap := HashMap{} 
 
 for  {   
 	var input string
@@ -27,11 +27,11 @@ for  {
 		queue.Qadd(input)
 	case "QPOP":
 		fmt.Println(queue.Qdell())
-	case "HADD":
+	case "HPUSH":
 		// Добавление элемента в хэштаблицу
 		fmt.Scanf("%s", &input) // Считываем ключ
 		fmt.Scanf("%s", &index2) // Считываем значение
-		hmap.Hadd(input, index2)
+		fmt.Println(hmap.Hadd(input, index2))
 	case "HGET":
 		// Получение значения из хэштаблицы
 		fmt.Scanf("%s", &input) // Считываем ключ

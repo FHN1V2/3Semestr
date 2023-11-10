@@ -32,7 +32,7 @@ func (hmap *HashMap) Hadd(key string, value string) error {
 	}
 	if hmap.table[hash] == nil {
 		hmap.table[hash] = p
-		return nil
+		return errors.New("")
 	}
 	if hmap.table[hash].key == key {
 		return errors.New("this key already exists")
@@ -40,7 +40,7 @@ func (hmap *HashMap) Hadd(key string, value string) error {
 	for i := (hash + 1) % len(hmap.table); i != hash; i = (i + 1) % len(hmap.table) {
 		if hmap.table[i] == nil {
 			hmap.table[i] = p
-			return nil
+			return errors.New("")
 		}
 		if hmap.table[i].key == key {
 			return errors.New("this key already exists")
