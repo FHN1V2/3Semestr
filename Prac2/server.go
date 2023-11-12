@@ -20,7 +20,7 @@ func NewDatabase() *Database {
 		Stack: &Stack{},
 		Queue: &Queue{},
 		set:   set,
-		hmap: &HashMap{},
+		hmap:  &HashMap{},
 	}
 }
 
@@ -36,88 +36,82 @@ func handleConnection(conn net.Conn, db *Database) {
 		}
 
 		input := string(buf[:n])
-		fmt.Printf("Received input: %s\n",input)
+		fmt.Printf("Received input: %s\n", input)
 
 		parts := strings.Fields(input)
 
+		if len(parts) == 1 {
+			command := parts[0]
+			switch command {
+			case "SPOP":
+				poppedValue := db.Stack.Spop()
+				conn.Write([]byte("Popped value from stack: " + poppedValue + "\n"))
+			case "QPOP":
+				poppedValue := db.Queue.Qpop()
+				conn.Write([]byte("Popped value from queue: " + poppedValue + "\n"))
+			case "SETPRINT":
+				setContents := db.set.SetPrint()
+				conn.Write([]byte(setContents + "\n"))
+			}
+		} else if len(parts) >= 2 {
+			command := parts[0]
+			switch command {
 
-		command := parts[0]
+			case "SPUSH":
 
-		switch command {
+				value := parts[1]
+				db.Stack.Spush(value)
+				conn.Write([]byte("Value pushed to stack: " + value + "\n"))
 
-		case "SPUSH":
-			if len(parts) < 2 {
-				conn.Write([]byte("Command must have at least 2 arguments\n"))
-				continue
+			case "QPUSH":
+				value := parts[1]
+				db.Queue.Qpush(value)
+				conn.Write([]byte("Value pushed to queue: " + value + "\n"))
+
+			case "SETPUSH":
+				value := parts[1]
+				db.set.SetAdd(value)
+				conn.Write([]byte("Value pushed to set: " + value + "\n"))
+
+			case "SETDEL":
+				value := parts[1]
+				db.set.SetRemove(value)
+			case "HPUSH":
+				if len(parts) < 3 {
+					conn.Write([]byte("Command must have at least 3 arguments\n"))
+					continue
+				}
+				key, value := parts[1], parts[2]
+				if db.hmap.Hadd(key, value) != nil {
+					conn.Write([]byte("Key already exists in hash map.\n"))
+					continue
+				}
+				db.hmap.Hadd(key, value)
+
+				conn.Write([]byte("Value pushed to hashtable: " + value + "\n"))
+			case "HDEL":
+				key := parts[1]
+				db.hmap.Hdel(key)
+			case "HGET":
+				key := parts[1]
+				poppedValue, err := db.hmap.Hget(key)
+				if err != nil {
+					conn.Write([]byte("Key not found in hash table.\n"))
+					continue
+				}
+				conn.Write([]byte("Value for key " + key + " is " + poppedValue + ".\n"))
+			default:
+				conn.Write([]byte("Unknown command: " + command + "\n"))
 			}
-			value := parts[1]
-			db.Stack.Spush(value)
-			conn.Write([]byte("Value pushed to stack: " + value + "\n"))
-		case "SPOP":
-			poppedValue := db.Stack.Spop()
-			conn.Write([]byte("Popped value from stack: " + poppedValue + "\n"))
-		case "QPUSH":
-			if len(parts) < 2 {
-				conn.Write([]byte("Command must have at least 2 arguments\n"))
-				continue
-			}
-			value := parts[1]
-			db.Queue.Qpush(value)
-			conn.Write([]byte("Value pushed to queue: " + value + "\n"))
-		case "QPOP":
-			poppedValue := db.Queue.Qpop()
-			conn.Write([]byte("Popped value from queue: " + poppedValue + "\n"))
-		case "SETPUSH":
-			if len(parts) < 2 {
-				conn.Write([]byte("Command must have at least 2 arguments\n"))
-				continue
-			}
-			value := parts[1]
-			db.set.SetAdd(value)
-			conn.Write([]byte("Value pushed to set: " + value + "\n"))
-		case "SETPRINT":
-			setContents := db.set.SetPrint()
-			conn.Write([]byte(setContents + "\n"))
-		case "SETDEL":
-			if len(parts) < 2 {
-				conn.Write([]byte("Command must have at least 2 arguments\n"))
-				continue
-			}
-			value := parts[1]
-			db.set.SetRemove(value)
-		case "HPUSH":
-			if len(parts) < 3 {
-				conn.Write([]byte("Command must have at least 3 arguments\n"))
-				continue
-			}
-			key, value := parts[1], parts[2]
-			db.hmap.Hadd(key, value)
-			conn.Write([]byte("Value pushed to hashtable: " + value + "\n"))
-		case "HDEL":
-			if len(parts) < 2 {
-				conn.Write([]byte("Command must have at least 2 arguments\n"))
-				continue
-			}
-			key := parts[1]
-			db.hmap.Hdel(key)
-		case "HGET":
-		if len(parts) < 2 {
-			conn.Write([]byte("Command must have at least 2 arguments\n"))
-			continue
+
 		}
-		key := parts[1]
-		poppedValue,err:= db.hmap.Hget(key)
-		if err != nil{
-			conn.Write([]byte("Key not found in hash table.\n"))
-			continue
+		if len(parts) >= 1 {
+			command := parts[0]
+			response := "Command received: " + command
+			conn.Write([]byte(response + "\n"))
+		} else {
+			conn.Write([]byte("Zero command \n"))
 		}
-		conn.Write([]byte("Value for key "+key+" is "+poppedValue+".\n"))
-		default:
-			conn.Write([]byte("Unknown command: " + command + "\n"))
-		}
-
-		response := "Command received: " + command
-		conn.Write([]byte(response + "\n"))
 	}
 }
 
@@ -149,5 +143,4 @@ func main() {
 		}()
 	}
 
-	
 }

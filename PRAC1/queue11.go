@@ -17,7 +17,7 @@ type Queue struct {
 func (q *Queue) Qadd(item string) {
 	newNode := &Qnode{
 		val:  item,
-		next: nil,
+		//next: nil,
 	}
 
 	if q.tail == nil {

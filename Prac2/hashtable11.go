@@ -2,9 +2,11 @@ package main
 
 import (
 	"errors"
+	"sync"
 )
 
 type HashMap struct {
+	mu    sync.Mutex
 	table [512]*Pair
 }
 
@@ -25,6 +27,8 @@ func calcHash(key string, size int) (int, error) {
 }
 
 func (hmap *HashMap) Hadd(key string, value string) error {
+	hmap.mu.Lock()
+	defer hmap.mu.Unlock()
 	p := &Pair{key, value}
 	hash, err := calcHash(key, len(hmap.table))
 	if err != nil {
@@ -50,6 +54,8 @@ func (hmap *HashMap) Hadd(key string, value string) error {
 }
 
 func (hmap *HashMap) Hget(key string) (string, error) {
+	hmap.mu.Lock()
+	defer hmap.mu.Unlock()
 	hash, err := calcHash(key, len(hmap.table))
 	if err != nil {
 		return "", errors.New("unacceptable key")
@@ -66,6 +72,8 @@ func (hmap *HashMap) Hget(key string) (string, error) {
 }
 
 func (hmap *HashMap) Hdel(key string) error {
+	hmap.mu.Lock()
+	defer hmap.mu.Unlock()
 	hash, err := calcHash(key, len(hmap.table))
 	if err != nil {
 		return errors.New("unacceptable key")

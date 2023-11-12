@@ -1,14 +1,13 @@
 package main
 
 import (
-	"fmt"
-	"sync"
+	//"fmt"
 	"strings"
-
+	"sync"
 )
 
 type Set struct {
-	mu sync.Mutex
+	mu   sync.Mutex
 	data map[string]bool
 }
 
@@ -18,15 +17,16 @@ func NewSet() *Set {
 
 func (s *Set) SetAdd(item string) {
 	s.mu.Lock()
-	s.data[item] = true
 	defer s.mu.Unlock()
+	s.data[item] = true
 	
+
 }
 
 func (s *Set) SetRemove(item string) {
-	if a := s.data[item]; !a {
-		fmt.Println("Not found")
-	}
+	// if a := s.data[item]; !a {
+	// 	fmt.Println("Not found")
+	// }
 
 	newData := make(map[string]bool)
 	for key := range s.data {
