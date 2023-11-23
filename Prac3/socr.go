@@ -3,30 +3,32 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"net/http"
 	"net"
+	"net/http"
 	"strings"
-	"time"
+	//	"time"
 )
 
+//получение IP хоста
+func GetMyIP() net.IP {
+	conn, _ := net.Dial("udp", "8.8.8.8:80")
+	defer conn.Close()
 
-func GetOutboundIP() net.IP {
-    conn,_ := net.Dial("udp", "8.8.8.8:80")
-    defer conn.Close()
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
 
-    localAddr := conn.LocalAddr().(*net.UDPAddr)
-
-    return localAddr.IP
+	return localAddr.IP
 }
-var urls = make(map[string]string)
+
+var urls = HashMap{}
 
 func main() {
+
 	http.HandleFunc("/", handleForm)
 	http.HandleFunc("/shorten", handleShorten)
 	http.HandleFunc("/short/", handleRedirect)
 
-	fmt.Println("URL Shortener is running on :3030")
-	http.ListenAndServe("0.0.0.0:3030", nil)
+	fmt.Println("URL Shortener is running on :3333")
+	http.ListenAndServe("0.0.0.0:3333", nil)
 
 }
 
@@ -36,7 +38,7 @@ func handleForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Serve the HTML form
+	//главная страница
 	w.Header().Set("Content-Type", "text/html")
 	fmt.Fprint(w, `
 	<!DOCTYPE html>
@@ -44,23 +46,27 @@ func handleForm(w http.ResponseWriter, r *http.Request) {
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>URL Shortener</title>
+		<title>Shortener</title>
 		<style>
 			body {
 				display: flex;
 				align-items: center;
 				justify-content: center;
 				height: 100vh;
-				margin: 0;
+				margin: 10px;
 			}
+			h2 {
+			  margin-top: -15px;
+			}
+
 	
 			form {
-				text-align: center;
+				text-align: centre;
 			}
 	
 			input[type="url"] {
 				width: 80%;
-				padding: 8px;
+				padding: 0px;
 				margin-bottom: 10px;
 			}
 	
@@ -70,7 +76,7 @@ func handleForm(w http.ResponseWriter, r *http.Request) {
 		</style>
 	</head>
 	<body>
-		<h2>URL Shortener</h2>
+		<h2>Shortener</h2>
 		<form method="post" action="/shorten">
 			<input type="url" name="url" placeholder="Enter a URL" required>
 			<br>
@@ -94,30 +100,34 @@ func handleShorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate a unique shortened key for the original URL
 	shortKey := generateShortKey()
-	urls[shortKey] = originalURL
-	HostIp:=GetOutboundIP()
-	// Construct the full shortened URL
-	shortenedURL := fmt.Sprintf(":3030/short/%s", HostIp.String(), shortKey)
+	err := urls.Hadd(shortKey, originalURL)
+	if err != nil {
+		http.Error(w, "Failed to generate short URL", http.StatusInternalServerError)
+		return
+	}
+	//urls[shortKey] = originalURL
+	HostIp := GetMyIP()
+	shortenedURL := fmt.Sprintf("/short/%s", shortKey)
 
-	// Serve the result page
+	//Страница с результатом
 	w.Header().Set("Content-Type", "text/html")
 	fmt.Fprint(w, `
 		<!DOCTYPE html>
 		<html>
 		<head>
-			<title>URL Shortener</title>
+			<title>Shorted</title>
 		</head>
 		<body>
-			<h2>URL Shortener</h2>
+			<h2>Shorted</h2>
 			<p>Original URL: `, originalURL, `</p>
-			<p>Shortened URL: <a href="`, shortenedURL, `">`, shortenedURL, `</a></p>
+			<p>Shorted URL: <a href="`, shortenedURL, `">`, fmt.Sprintf("%s:3333%s", HostIp, shortenedURL), `</a></p>
 		</body>
 		</html>
 	`)
 }
 
+//
 func handleRedirect(w http.ResponseWriter, r *http.Request) {
 	shortKey := strings.TrimPrefix(r.URL.Path, "/short/")
 	if shortKey == "" {
@@ -125,22 +135,22 @@ func handleRedirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Retrieve the original URL from the `urls` map using the shortened key
-	originalURL, found := urls[shortKey]
-	if !found {
+	//получение оригинального url по ключу из хэштаблицы
+	originalURL, err := urls.Hget(shortKey)
+	if err != nil {
 		http.Error(w, "Shortened key not found", http.StatusNotFound)
 		return
 	}
 
-	// Redirect the user to the original URL
 	http.Redirect(w, r, originalURL, http.StatusMovedPermanently)
 }
 
+//генерация короткого ключа на основе рандома длинны и символов
 func generateShortKey() string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	const keyLength = 4
+	keyLength := rand.Intn(6) + 1
 
-	rand.Seed(time.Now().UnixNano())
+	//rand.Seed(time.Now().UnixNano())
 	shortKey := make([]byte, keyLength)
 	for i := range shortKey {
 		shortKey[i] = charset[rand.Intn(len(charset))]
