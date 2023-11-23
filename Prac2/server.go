@@ -36,7 +36,7 @@
 			}
 
 			input := string(buf[:n])
-			//fmt.Printf("Received input: %s\n", input)
+			fmt.Printf("Received input: %s\n", input)
 
 			parts := strings.Fields(input)
 
@@ -83,7 +83,7 @@
 					}
 					key, value := parts[1], parts[2]
 					if db.hmap.Hadd(key, value) != nil {
-						conn.Write([]byte("Key already exists in hash map.\n"))
+						conn.Write([]byte("Key already exists in hashmap.\n"))
 						continue
 					}
 					db.hmap.Hadd(key, value)
@@ -106,9 +106,9 @@
 
 			}
 			if len(parts) >= 1 {
-				command := parts[0]
-				response := "Command received: " + command
-				conn.Write([]byte(response + "\n"))
+				//command := parts[0]
+				//response := "Command received: " + command
+				//conn.Write([]byte(response + "\n"))
 			} else {
 				conn.Write([]byte("Zero command \n"))
 			}
@@ -141,6 +141,8 @@
 				defer wg.Done()
 				handleConnection(conn, db)
 			}()
+			//wg.Wait()
 		}
+
 
 	}

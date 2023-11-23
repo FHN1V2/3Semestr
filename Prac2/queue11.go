@@ -2,7 +2,7 @@ package main
 
 import "sync"
 
-// #TODO: ! переделать !
+
 // Queue represents a queue data structure.
 type Queue struct {
 	mu    sync.Mutex
