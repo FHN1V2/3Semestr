@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 	"strings"
-	//	"time"
 )
 
 //получение IP хоста
