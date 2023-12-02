@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Shorterer</title>
+    
+    <style>
+
+        body{
+            background-color: rgb(252, 252, 252);
+            
+            background-size: 100%;
+        }
+
+        h1{
+            text-align: center;
+            color: #000000;
+            font-size: 56px;
+        }
+
+        form{
+            text-align: center;
+        }
+
+        .url_input{
+            color: #fff;           
+        }
+
+        .url_output{
+            color: #000000;
+            font-size: 28px;   
+        }
+
+        .btm{            
+            font-size: 14px;
+        }
+
+    </style>
+
+</head>
+<body>
+    <h1>Shorterer</h1>
+
+    <form method="post" action="/">
+        <div >
+          <label 
+            class="url_input" 
+            for="user_input"></label>
+          <input
+            type="url"
+            id="user_input"
+            name="user_input"
+            size="70" 
+            required/>
+            <button class="btm" type="submit">Shorten</button>
+        </div>
+        {% if output_link %}
+        <div class="url_output" id="output_link">
+            <a href="{{output_link}}" target="_blank">{{output_link}}</a>
+        </div>
+    {% endif %}
+    </form>
+
+</body>
+
+</html>
