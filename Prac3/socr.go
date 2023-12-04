@@ -18,7 +18,43 @@ func GetMyIP() net.IP {
 	return localAddr.IP
 }
 
-var urls = HashMap{}
+func sendCommandToDatabase(mainCommand, key, value string) (string, error) {
+	conn, err := net.Dial("tcp", "192.168.1.108:6379")
+	if err != nil {
+		return "", fmt.Errorf("failed to connect to the database server: %s", err)
+	}
+	defer conn.Close()
+	switch mainCommand{
+	case "HPUSH":
+			command := fmt.Sprintf("%s %s %s", mainCommand, key, value)
+			_, err = conn.Write([]byte(command))
+	case "HGET":
+		command := fmt.Sprintf("%s %s", mainCommand, key)
+		_, err = conn.Write([]byte(command))
+
+	}
+
+
+	// command := fmt.Sprintf("%s %s", mainCommand, key)
+	// _, err = conn.Write([]byte(command))
+	// if err != nil {
+	// 	return "", fmt.Errorf("failed to send command to the database server: %s", err)
+	// }
+
+	// Assuming the database returns a response, read it from the connection
+	responseBuf := make([]byte, 1024)
+	n, err := conn.Read(responseBuf)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response from the database server: %s", err)
+	}
+
+	return string(responseBuf[:n]), nil
+}
+
+
+
+
+
 
 func main() {
 
@@ -100,12 +136,11 @@ func handleShorten(w http.ResponseWriter, r *http.Request) {
 	}
 
 	shortKey := generateShortKey()
-	err := urls.Hadd(shortKey, originalURL)
+	_,err := sendCommandToDatabase("HPUSH", shortKey, originalURL)
 	if err != nil {
 		http.Error(w, "Failed to generate short URL", http.StatusInternalServerError)
 		return
 	}
-	//urls[shortKey] = originalURL
 	HostIp := GetMyIP()
 	shortenedURL := fmt.Sprintf("/short/%s", shortKey)
 
@@ -135,7 +170,9 @@ func handleRedirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//получение оригинального url по ключу из хэштаблицы
-	originalURL, err := urls.Hget(shortKey)
+	originalURL, err := sendCommandToDatabase("HGET", shortKey, "")
+	originalURL=strings.TrimPrefix(originalURL,shortKey+" ")
+	fmt.Println(originalURL)
 	if err != nil {
 		http.Error(w, "Shortened key not found", http.StatusNotFound)
 		return

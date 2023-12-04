@@ -99,7 +99,7 @@
 						conn.Write([]byte("Key not found in hash table.\n"))
 						continue
 					}
-					conn.Write([]byte("Value for key " + key + " is " + poppedValue + ".\n"))
+					conn.Write([]byte(key + " " + poppedValue + ".\n"))
 				default:
 					conn.Write([]byte("Unknown command: " + command + "\n"))
 				}
