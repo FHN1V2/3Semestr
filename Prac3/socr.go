@@ -6,7 +6,16 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"encoding/json"
+	"time"
 )
+
+
+type Log struct {
+	IP   string
+	URL    string
+	Time  string
+}
 
 //получение IP хоста
 func GetMyIP() net.IP {
@@ -19,7 +28,7 @@ func GetMyIP() net.IP {
 }
 
 func sendCommandToDatabase(mainCommand, key, value string) (string, error) {
-	conn, err := net.Dial("tcp", "192.168.1.108:6379")
+	conn, err := net.Dial("tcp", "localhost:6379")
 	if err != nil {
 		return "", fmt.Errorf("failed to connect to the database server: %s", err)
 	}
@@ -31,17 +40,10 @@ func sendCommandToDatabase(mainCommand, key, value string) (string, error) {
 	case "HGET":
 		command := fmt.Sprintf("%s %s", mainCommand, key)
 		_, err = conn.Write([]byte(command))
-
+	case "QPUSH":
+		command:=fmt.Sprintf("%s %s",mainCommand,key)
+		_, err = conn.Write([]byte(command))
 	}
-
-
-	// command := fmt.Sprintf("%s %s", mainCommand, key)
-	// _, err = conn.Write([]byte(command))
-	// if err != nil {
-	// 	return "", fmt.Errorf("failed to send command to the database server: %s", err)
-	// }
-
-	// Assuming the database returns a response, read it from the connection
 	responseBuf := make([]byte, 1024)
 	n, err := conn.Read(responseBuf)
 	if err != nil {
@@ -54,12 +56,12 @@ func sendCommandToDatabase(mainCommand, key, value string) (string, error) {
 
 
 
-
-
 func main() {
 
 	http.HandleFunc("/", handleForm)
 	http.HandleFunc("/shorten", handleShorten)
+
+	
 	http.HandleFunc("/short/", handleRedirect)
 
 	fmt.Println("URL Shortener is running on :3333")
@@ -169,17 +171,40 @@ func handleRedirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//получение оригинального url по ключу из хэштаблицы
 	originalURL, err := sendCommandToDatabase("HGET", shortKey, "")
-	originalURL=strings.TrimPrefix(originalURL,shortKey+" ")
+	originalURL = strings.TrimPrefix(originalURL, shortKey+" ")
 	fmt.Println(originalURL)
 	if err != nil {
 		http.Error(w, "Shortened key not found", http.StatusNotFound)
 		return
 	}
 
-	http.Redirect(w, r, originalURL, http.StatusMovedPermanently)
+	currentTime := time.Now().Format("2006-01-02")
+	IP := r.RemoteAddr
+
+	log := Log{
+		IP:   IP,
+		URL:  originalURL,
+		Time: currentTime,
+	}
+
+	logJSON, err := json.Marshal(log)
+	if err != nil {
+		http.Error(w, "Failed to create log entry", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = sendCommandToDatabase("QPUSH", string(logJSON),"")
+	if err != nil {
+		http.Error(w, "Failed to save log entry", http.StatusInternalServerError)
+		return
+	}
+	someValue:=1000
+	for i := 0; i < someValue; i++ {
+		http.Redirect(w, r, originalURL, http.StatusMovedPermanently)
+	}
 }
+
 
 //генерация короткого ключа на основе рандома длинны и символов
 func generateShortKey() string {
