@@ -18,7 +18,7 @@ func (q *Queue) Qpush(item string) {
 
 func (q *Queue) Qpop() string {
 	if len(q.items) == 0 {
-		return "Error"
+		return "ERROR"
 	}
 	item := q.items[0]
 	q.items = q.items[1:]
