@@ -199,10 +199,9 @@ func handleRedirect(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to save log entry", http.StatusInternalServerError)
 		return
 	}
-	someValue:=1000
-	for i := 0; i < someValue; i++ {
+
 		http.Redirect(w, r, originalURL, http.StatusMovedPermanently)
-	}
+
 }
 
 
